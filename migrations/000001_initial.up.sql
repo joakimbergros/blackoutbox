@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sys_id INTEGER NOT NULL,
+    ext_id INTEGER NOT NULL,
+    file_path TEXT NOT NULL,
+    updated_at DATETIME NULL,
+    deleted_at DATETIME NULL
+)
