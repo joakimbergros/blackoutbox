@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS documents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ext_id INTEGER NOT NULL,
+    ext_id STRING NOT NULL,
     is_system BOOLEAN NOT NULL DEFAULT 0,
     file_path TEXT NOT NULL,
     updated_at DATETIME NULL,
