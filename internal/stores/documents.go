@@ -6,6 +6,14 @@ import (
 	"time"
 )
 
+type DocumentStoreInterface interface {
+	Add(model models.Document) error
+	Get() ([]models.Document, error)
+	Update(model models.Document) error
+	GetByFileId(id int) (*models.Document, error)
+	GetBySystemId(id int) ([]models.Document, error)
+}
+
 type DocumentStore struct {
 	Db *sql.DB
 }
@@ -51,4 +59,16 @@ func (h *DocumentStore) Get() ([]models.Document, error) {
 	}
 
 	return documents, nil
+}
+
+func (s *DocumentStore) Update(model models.Document) error {
+	return nil
+}
+
+func (s *DocumentStore) GetByFileId(id int) (*models.Document, error) {
+	return nil, nil
+}
+
+func (s *DocumentStore) GetBySystemId(id int) ([]models.Document, error) {
+	return nil, nil
 }

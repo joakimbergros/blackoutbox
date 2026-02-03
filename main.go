@@ -1,7 +1,7 @@
 package main
 
 import (
-	"blackoutbox/internal/handlers"
+	"blackoutbox/internal/handlers/documents"
 	"blackoutbox/internal/stores"
 	"database/sql"
 	"log"
@@ -17,11 +17,12 @@ func main() {
 	}
 
 	documentStore := stores.DocumentStore{Db: db}
-	documentHandler := handlers.DocumentHandler{Store: &documentStore}
+	documentHandler := documents.DocumentHandler{Store: &documentStore}
 
 	mux := http.NewServeMux()
 
 	mux.Handle("GET /documents", documentHandler.Get())
+	mux.Handle("POST /documents", documentHandler.Post())
 
 	if err := http.ListenAndServe(":3000", mux); err != nil {
 		log.Panicf("Unable to start server: %s", err.Error())
