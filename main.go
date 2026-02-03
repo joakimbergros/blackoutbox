@@ -1,7 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"log"
+	"net/http"
+)
 
 func main() {
-	fmt.Println("Hello world")
+	mux := http.NewServeMux()
+
+	if err := http.ListenAndServe(":3000", mux); err != nil {
+		log.Panicf("Unable to start server: %s", err.Error())
+	}
 }
