@@ -210,8 +210,10 @@ This is a hackathon project, but contributions are welcome! Feel free to:
 
 ## 👥 Team
 
-Developed during [Hackathon Name] by:
-- [Team member names]
+Developed during [KLIRR-hack 3–4 February 2026](https://www.klirr-hack.se) by:
+- Joakim Bergros ([@joakimbergros](https://github.com/joakimbergros))
+- Ammar Kasem ([@Ammar-Kasem](https://github.com/Ammar-Kasem))
+- Gustav Fröjdlund ([@gustavfrojdlund](https://github.com/gustavfrojdlund))
 
 ## 🙏 Acknowledgments
 
