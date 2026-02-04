@@ -46,13 +46,11 @@ func main() {
 	printJobHandler := printjobs.PrintJobHandler{Store: &printJobStore}
 
 	systemStore := stores.SystemStore{
-		Db:        db,
-		FilesRoot: "uploads",
+		Db: db,
 	}
 
 	systemHandler := systems.SystemHandler{
 		SystemStore: &systemStore,
-		UploadRoot:  "uploads",
 	}
 
 	printer := cups.NewPrinter(&printJobStore)

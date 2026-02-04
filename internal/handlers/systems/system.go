@@ -14,7 +14,6 @@ import (
 
 type SystemHandler struct {
 	SystemStore stores.SystemStoreInterface
-	UploadRoot  string // e.g. "uploads"
 }
 
 // Sync replaces all documents and files for a system.

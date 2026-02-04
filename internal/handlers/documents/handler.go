@@ -7,6 +7,7 @@ package documents
 import (
 	"blackoutbox/internal/models"
 	"blackoutbox/internal/response"
+	"blackoutbox/internal/storage"
 	"blackoutbox/internal/stores"
 	"encoding/json"
 	"fmt"
@@ -98,7 +99,7 @@ func (h *DocumentHandler) Post() http.HandlerFunc {
 			return
 		}
 
-		uploadDir := filepath.Join("uploads", systemId)
+		uploadDir := filepath.Join(storage.DocumentsRoot, systemId)
 		if err := os.MkdirAll(uploadDir, 0755); err != nil {
 			http.Error(w, "Failed to create upload directory", http.StatusInternalServerError)
 			return
@@ -144,7 +145,7 @@ func (h *DocumentHandler) Post() http.HandlerFunc {
 		if err := h.Store.Add(models.Document{
 			SystemId:      systemId,
 			FileId:        fileId,
-			FilePath:      filepath.Join("uploads", systemId, filename),
+			FilePath:      filepath.Join(storage.DocumentsRoot, systemId, filename),
 			PrintAt:       printAt,
 			LastPrintedAt: nil,
 			Tags:          tags,

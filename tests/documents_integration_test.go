@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"blackoutbox/internal/handlers/documents"
+	"blackoutbox/internal/storage"
 	"blackoutbox/internal/stores"
 	"database/sql"
 
@@ -83,10 +84,10 @@ func cleanupUploads(filePath string) {
 	if filePath != "" {
 		os.Remove(filePath)
 		dir := filepath.Dir(filePath)
-		if dir != "uploads" && dir != "." {
+		if dir != storage.DocumentsRoot && dir != "." {
 			os.Remove(dir)
 			parentDir := filepath.Dir(dir)
-			if parentDir == "uploads" {
+			if parentDir == storage.DocumentsRoot {
 				os.Remove(parentDir)
 			}
 		}
