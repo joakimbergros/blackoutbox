@@ -9,6 +9,7 @@ import (
 	"blackoutbox/internal/handlers/documents"
 	"blackoutbox/internal/handlers/printjobs"
 	"blackoutbox/internal/handlers/systems"
+	"blackoutbox/internal/handlers/templates"
 	"blackoutbox/internal/handlers/triggers"
 	"blackoutbox/internal/middleware"
 	"blackoutbox/internal/monitor"
@@ -35,6 +36,9 @@ func main() {
 	documentStore := stores.DocumentStore{Db: db}
 	documentHandler := documents.DocumentHandler{Store: &documentStore}
 
+	templateStore := stores.TemplateStore{Db: db}
+	templateHandler := templates.TemplatesHandler{Store: &templateStore}
+
 	triggerStore := stores.TriggerStore{Db: db}
 	triggerHandler := triggers.TriggerHandler{Store: &triggerStore}
 
@@ -42,17 +46,15 @@ func main() {
 	printJobHandler := printjobs.PrintJobHandler{Store: &printJobStore}
 
 	systemStore := stores.SystemStore{
-		Db:        db,
-		FilesRoot: "uploads",
+		Db: db,
 	}
 
 	systemHandler := systems.SystemHandler{
 		SystemStore: &systemStore,
-		UploadRoot:  "uploads",
 	}
 
 	printer := cups.NewPrinter(&printJobStore)
-	monitorService := monitor.NewMonitor(&triggerStore, &documentStore, &printJobStore, printer)
+	monitorService := monitor.NewMonitor(&triggerStore, &documentStore, &templateStore, &printJobStore, printer)
 	workerService := worker.NewWorker(monitorService, printer)
 
 	go workerService.Start()
@@ -66,6 +68,10 @@ func main() {
 	mux.Handle("GET /documents/{id}", baseMiddleware.Then(documentHandler.GetById()))
 	mux.Handle("POST /documents", authMiddleware.Then(documentHandler.Post()))
 	mux.Handle("PATCH /documents", authMiddleware.Then(documentHandler.Update()))
+
+	mux.Handle("GET /templates", authMiddleware.Then(templateHandler.Get()))
+	mux.Handle("POST /templates", authMiddleware.Then(templateHandler.Post()))
+	mux.Handle("DELETE /templates", authMiddleware.Then(templateHandler.Delete()))
 
 	mux.Handle("GET /triggers", baseMiddleware.Then(triggerHandler.Get()))
 	mux.Handle("GET /triggers/{id}", baseMiddleware.Then(triggerHandler.GetById()))

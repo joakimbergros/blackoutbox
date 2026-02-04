@@ -23,6 +23,7 @@ const (
 type Monitor struct {
 	triggerStore    stores.TriggerStoreInterface
 	documentStore   stores.DocumentStoreInterface
+	templateStore   stores.TemplateStoreInterface
 	printJobStore   stores.PrintJobStoreInterface
 	printJobCreator PrintJobCreator
 }
@@ -34,12 +35,14 @@ type PrintJobCreator interface {
 func NewMonitor(
 	triggerStore stores.TriggerStoreInterface,
 	documentStore stores.DocumentStoreInterface,
+	templateStore stores.TemplateStoreInterface,
 	printJobStore stores.PrintJobStoreInterface,
 	printJobCreator PrintJobCreator,
 ) *Monitor {
 	return &Monitor{
 		triggerStore:    triggerStore,
 		documentStore:   documentStore,
+		templateStore:   templateStore,
 		printJobStore:   printJobStore,
 		printJobCreator: printJobCreator,
 	}
@@ -47,7 +50,10 @@ func NewMonitor(
 
 func (m *Monitor) CheckTrigger(trigger models.Trigger) error {
 	client := &http.Client{
-		Timeout: checkTimeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Timeout: 5 * time.Second,
 	}
 
 	req, err := http.NewRequest("HEAD", trigger.Url, nil)
@@ -136,8 +142,20 @@ func (m *Monitor) triggerPrintJobs(systemId string) error {
 	}
 
 	for _, doc := range documents {
+		templates, err := m.templateStore.GetByFileId(doc.FileId)
+		if err != nil {
+			log.Printf("Failed to gather templates from db for document %d: %v", doc.Id, err)
+		}
+
 		if err := m.printJobCreator.CreatePrintJob(doc.Id, doc.FilePath); err != nil {
 			log.Printf("Failed to create print job for document %d: %v", doc.Id, err)
+		}
+
+		//TODO Should support multiple templates tied to single file_id?
+		if templates != nil {
+			if err := m.printJobCreator.CreatePrintJob(templates.Id, templates.FilePath); err != nil {
+				log.Printf("Failed to create print job for document %d: %v", doc.Id, err)
+			}
 		}
 	}
 

@@ -7,6 +7,7 @@ package tests
 import (
 	"blackoutbox/internal/handlers/documents"
 	"blackoutbox/internal/models"
+	"blackoutbox/internal/storage"
 	"bytes"
 	"mime/multipart"
 	"net/http"
@@ -216,7 +217,7 @@ func TestDocumentHandlerPost(t *testing.T) {
 					t.Errorf("Expected FileId 'file456', got '%s'", mockStore.LastAdded.FileId)
 				}
 
-				expectedPathPrefix := filepath.Join("uploads", "system123")
+				expectedPathPrefix := filepath.Join(storage.DocumentsRoot, "system123")
 				if mockStore.LastAdded.FilePath[:len(expectedPathPrefix)] != expectedPathPrefix {
 					t.Errorf("Expected FilePath to start with '%s', got '%s'", expectedPathPrefix, mockStore.LastAdded.FilePath)
 				}

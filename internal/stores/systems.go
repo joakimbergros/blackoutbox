@@ -6,6 +6,7 @@ package stores
 
 import (
 	"blackoutbox/internal/models"
+	"blackoutbox/internal/storage"
 	"database/sql"
 	"os"
 	"path/filepath"
@@ -18,8 +19,7 @@ type SystemStoreInterface interface {
 }
 
 type SystemStore struct {
-	Db        *sql.DB
-	FilesRoot string // root directory where system folders live
+	Db *sql.DB
 }
 
 // Sync replaces all documents for a system and refreshes its filesystem folder.
@@ -77,7 +77,7 @@ func (s *SystemStore) Sync(systemId string, documents []models.Document) error {
 	}
 
 	// 4. Sync filesystem
-	systemDir := filepath.Join(s.FilesRoot, systemId)
+	systemDir := filepath.Join(storage.DocumentsRoot, systemId)
 
 	// Remove old system directory completely
 	if err := os.RemoveAll(systemDir); err != nil {
@@ -112,6 +112,6 @@ func (s *SystemStore) DeleteSystem(systemId string) error {
 		return err
 	}
 
-	systemDir := filepath.Join(s.FilesRoot, systemId)
+	systemDir := filepath.Join(storage.DocumentsRoot, systemId)
 	return os.RemoveAll(systemDir)
 }

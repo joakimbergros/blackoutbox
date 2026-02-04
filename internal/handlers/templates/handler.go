@@ -2,29 +2,26 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-package documents
+package templates
 
 import (
 	"blackoutbox/internal/models"
 	"blackoutbox/internal/response"
-	"blackoutbox/internal/storage"
 	"blackoutbox/internal/stores"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 )
 
-type DocumentHandler struct {
-	Store stores.DocumentStoreInterface
+type TemplatesHandler struct {
+	Store stores.TemplateStoreInterface
 }
 
-func (h *DocumentHandler) Get() http.HandlerFunc {
+func (h *TemplatesHandler) Get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		systemIdFilter := r.URL.Query().Get("system-id")
 		fileIdFilter := r.URL.Query().Get("file-id")
@@ -61,7 +58,7 @@ func (h *DocumentHandler) Get() http.HandlerFunc {
 	}
 }
 
-func (h *DocumentHandler) Post() http.HandlerFunc {
+func (h *TemplatesHandler) Post() http.HandlerFunc {
 	const maxFileSize = 10 << 20 // 10MB
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +96,7 @@ func (h *DocumentHandler) Post() http.HandlerFunc {
 			return
 		}
 
-		uploadDir := filepath.Join(storage.DocumentsRoot, systemId)
+		uploadDir := filepath.Join("templates", fileId)
 		if err := os.MkdirAll(uploadDir, 0755); err != nil {
 			http.Error(w, "Failed to create upload directory", http.StatusInternalServerError)
 			return
@@ -120,37 +117,15 @@ func (h *DocumentHandler) Post() http.HandlerFunc {
 			return
 		}
 
-		var printAt *int64
-		printAtStr := r.FormValue("print_at")
-		if printAtStr != "" {
-			timestamp, err := strconv.ParseInt(printAtStr, 10, 64)
-			if err != nil {
-				http.Error(w, "print_at must be a valid Unix timestamp", http.StatusBadRequest)
-				return
-			}
-			printAt = &timestamp
-		}
-
-		var tags []string
-		tagsStr := r.FormValue("tags")
-		if tagsStr != "" {
-			if err := json.Unmarshal([]byte(tagsStr), &tags); err != nil {
-				http.Error(w, "tags must be a valid JSON array", http.StatusBadRequest)
-				return
-			}
-		}
-
 		now := time.Now()
 
-		if err := h.Store.Add(models.Document{
-			SystemId:      systemId,
-			FileId:        fileId,
-			FilePath:      filepath.Join(storage.DocumentsRoot, systemId, filename),
-			PrintAt:       printAt,
-			LastPrintedAt: nil,
-			Tags:          tags,
-			UpdatedAt:     &now,
-			DeletedAt:     nil,
+		if err := h.Store.Add(models.Template{
+			SystemId:    systemId,
+			FileId:      fileId,
+			FilePath:    filePath,
+			Description: r.FormValue("description"),
+			CreatedAt:   &now,
+			DeletedAt:   nil,
 		}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -160,26 +135,8 @@ func (h *DocumentHandler) Post() http.HandlerFunc {
 	}
 }
 
-func (h *DocumentHandler) Update() http.HandlerFunc {
+func (h *TemplatesHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-	}
-}
-
-func (h *DocumentHandler) GetById() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-		if id == "" {
-			http.Error(w, "id is required", http.StatusBadRequest)
-			return
-		}
-
-		document, err := h.Store.GetById(id)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		response.JSON(w, http.StatusOK, document)
 	}
 }
