@@ -210,8 +210,10 @@ MPL2
 
 ## 👥 Team
 
-Utvecklat under [Hackathon-namn] av:
-- [Teammedlemmars namn]
+Utvecklat under [KLIRR-hack 3–4 februari 2026](https://www.klirr-hack.se) av:
+- Joakim Bergros ([@joakimbergros](https://github.com/joakimbergros))
+- Ammar Kasem ([@Ammar-Kasem](https://github.com/Ammar-Kasem))
+- Gustav Fröjdlund ([@gustavfrojdlund](https://github.com/gustavfrojdlund))
 
 ## 🙏 Tack
 
