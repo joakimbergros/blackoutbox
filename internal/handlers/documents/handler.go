@@ -139,6 +139,26 @@ func (h *DocumentHandler) Update() http.HandlerFunc {
 
 func (h *DocumentHandler) GetById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		if id == "" {
+			http.Error(w, "id is required", http.StatusBadRequest)
+			return
+		}
 
+		document, err := h.Store.GetById(id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		json, err := json.Marshal(document)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+		w.Write(json)
+		return
 	}
 }
