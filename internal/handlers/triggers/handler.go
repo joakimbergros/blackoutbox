@@ -8,6 +8,7 @@ import (
 	"blackoutbox/internal/models"
 	"blackoutbox/internal/response"
 	"blackoutbox/internal/stores"
+	"blackoutbox/internal/validation"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -79,6 +80,12 @@ func (h *TriggerHandler) Post() http.HandlerFunc {
 
 		if req.Url == "" {
 			http.Error(w, "url is required", http.StatusBadRequest)
+			return
+		}
+
+		//TODO Add more validation for SSRF attacks
+		if err := validation.ValidateTriggerURL(req.Url); err != nil {
+			http.Error(w, "url is not public", http.StatusBadRequest)
 			return
 		}
 

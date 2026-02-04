@@ -76,9 +76,12 @@ func main() {
 	mux.Handle("POST /systems/{system_id}/sync", systemHandler.Sync())
 	mux.Handle("DELETE /systems/{system_id}", systemHandler.Delete())
 
+	serverTimeout := 5 * time.Second
 	server := &http.Server{
-		Addr:    ":3000",
-		Handler: mux,
+		Addr:              ":3000",
+		Handler:           mux,
+		ReadHeaderTimeout: serverTimeout,
+		ReadTimeout:       serverTimeout,
 	}
 
 	go func() {
