@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -23,8 +24,7 @@ func (h *DocumentHandler) Get() http.HandlerFunc {
 		systemIdFilter := r.URL.Query().Get("system-id")
 		fileIdFilter := r.URL.Query().Get("file-id")
 
-		var data []byte
-		var marshallErr error
+		var data any
 
 		if systemIdFilter != "" {
 			documents, err := h.Store.GetBySystemId(systemIdFilter)
@@ -33,7 +33,7 @@ func (h *DocumentHandler) Get() http.HandlerFunc {
 				return
 			}
 
-			data, marshallErr = json.Marshal(documents)
+			data = documents
 		} else if fileIdFilter != "" {
 			document, err := h.Store.GetByFileId(fileIdFilter)
 			if err != nil {
@@ -41,7 +41,7 @@ func (h *DocumentHandler) Get() http.HandlerFunc {
 				return
 			}
 
-			data, marshallErr = json.Marshal(document)
+			data = document
 		} else {
 			documents, err := h.Store.Get()
 			if err != nil {
@@ -49,12 +49,7 @@ func (h *DocumentHandler) Get() http.HandlerFunc {
 				return
 			}
 
-			data, marshallErr = json.Marshal(documents)
-		}
-
-		if marshallErr != nil {
-			http.Error(w, marshallErr.Error(), http.StatusInternalServerError)
-			return
+			data = documents
 		}
 
 		response.JSON(w, http.StatusOK, data)
@@ -73,6 +68,11 @@ func (h *DocumentHandler) Post() http.HandlerFunc {
 		systemId := r.FormValue("system_id")
 		if systemId == "" {
 			http.Error(w, "system_id is required", http.StatusBadRequest)
+			return
+		}
+
+		if strings.Contains(systemId, "../") || strings.Contains(systemId, "..\\") {
+			http.Error(w, "Invalid file path", http.StatusBadRequest)
 			return
 		}
 
