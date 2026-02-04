@@ -1,0 +1,223 @@
+# BlackoutBox
+
+Ett robust, fristående dokumenthanteringssystem designat för nödsituationer där digital infrastruktur blir otillgänglig. Byggt för offentlig sektor, särskilt äldreomsorgsverksamheter, för att säkerställa att kritisk information förblir tillgänglig vid internetavbrott, cyberattacker eller infrastrukturfel.
+
+## 🎯 Vision
+
+BlackoutBox fungerar som en digital "svart låda" som lagrar viktiga dokument och automatiskt skriver ut dem när normalsystemen fallerar. Tänk på det som ett reservsystem som säkerställer kontinuitet i vården och tillgång till vital information när "skiten träffar fläkten".
+
+## 🚀 Nuvarande status
+
+**Hackathon-projekt - Konceptbevis**
+
+Detta är ett tidigt skede av implementation utvecklad under en hackathon för att visa potentialen i offline-först akut dokumenthantering. Kärnfunktionaliteten är implementerad och testad, men produktionssättning är inte än komplett.
+
+## ✨ Nyckelfunktioner
+
+- **Offline-först-arkitektur**: Fullständigt oberoende av internetanslutning
+- **Automatisk akut utskrift**: Utlös dokumentutskrift baserat på schemalagda tidsstämplar
+- **Stöd för flera system**: Organisera dokument efter system (t.ex. olika vårdinrättningar, avdelningar)
+- **Taggbaserad organisering**: Kategorisera dokument för snabb hämtning
+- **Mjuk borttagning**: Bevara dokumenthistorik med borttagningshantering
+- **RESTful API**: Enkelt, standardiserat HTTP-gränssnitt för integration
+- **Fristående distribution**: Körs på minimal hårdvara
+
+## 🏗️ Arkitektur
+
+### Teknikstack
+
+- **Go 1.25.6** - Lättviktig, effektiv backend
+- **SQLite3** - Inbyggd databas, inga externa beroenden
+- **Standardbibliotek** - Minimala externa beroenden för tillförlitlighet
+
+### Distribution
+
+- **Primärt**: Raspberry Pi med PCI RAID-lagring + trådbunden skrivare
+- **Alternativ**: Avskaffade bärbara datorer
+
+Systemet är designat för att vara helt fristående med minimala resurskrav.
+
+## 📋 API-slutpunkter
+
+### Dokument
+
+| Metod | Slutpunkt | Beskrivning |
+|--------|-----------|-------------|
+| `GET` | `/documents` | Lista alla dokument eller filtrera efter `system-id` eller `file-id` |
+| `GET` | `/documents/{id}` | Hämta ett specifikt dokument efter ID |
+| `POST` | `/documents` | Ladda upp ett nytt dokument |
+| `PATCH` | `/documents` | Uppdatera ett dokument (platshållare) |
+
+### Frågeparametrar
+
+- `system-id` - Filtrera dokument efter systemidentifierare
+- `file-id` - Filtrera dokument efter filidentifierare
+
+### Format för begäran/svar
+
+Alla slutpunkter använder JSON för begäran- och svarstexter.
+
+**Dokumentmodell:**
+```json
+{
+  "id": 1,
+  "system_id": "care-facility-1",
+  "file_id": "emergency-protocol-001",
+  "file_path": "uploads/care-facility-1/1738581234_protocol.pdf",
+  "print_at": 1738581234,
+  "last_printed_at": null,
+  "tags": ["emergency", "protocol", "high-priority"],
+  "updated_at": "2026-02-04T10:00:00Z",
+  "deleted_at": null
+}
+```
+
+## 🛠️ Kom igång
+
+### Förutsättningar
+
+- Go 1.25.6 eller högre
+- SQLite3
+- (Valfritt) `migrate` CLI-verktyg för databasmigreringar
+
+### Installation
+
+```bash
+# Klona arkivet
+git clone <repository-url>
+cd blackoutbox
+
+# Installera beroenden
+go mod download
+
+# Kör databasmigreringar
+just migrate-up
+
+# Starta servern
+go run main.go
+```
+
+Servern startar på `http://localhost:3000`
+
+### Testning
+
+```bash
+# Kör alla tester
+just test
+
+# Kör tester med täckning
+just test-coverage
+```
+
+### Tillgängliga kommandon
+
+```bash
+just migrate-up      # Tillämpa databasmigreringar
+just migrate-down    # Återställ databasmigreringar
+just test            # Kör alla tester
+just test-coverage   # Kör tester med täckningsrapport
+```
+
+## 📄 Dokumentuppladdning
+
+Ladda upp dokument med multipart-formulärdata:
+
+```bash
+curl -X POST http://localhost:3000/documents \
+  -F "system_id=care-facility-1" \
+  -F "file_id=emergency-protocol-001" \
+  -F "file=@protocol.pdf" \
+  -F "tags=[\"emergency\",\"protocol\"]" \
+  -F "print_at=1738581234"
+```
+
+### Obligatoriska fält
+
+- `system_id` - System-/avdelningsidentifierare
+- `file_id` - Unik filidentifierare
+- `file` - Dokumentfilen (max 10MB)
+
+### Valfria fält
+
+- `tags` - JSON-array med taggar för kategorisering
+- `print_at` - Unix-tidsstämpel för automatisk utskrift
+
+## 🗄️ Databasschema
+
+```sql
+CREATE TABLE documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    system_id STRING NOT NULL,
+    file_id STRING NOT NULL,
+    file_path TEXT NOT NULL,
+    print_at INTEGER NULL,
+    last_printed_at INTEGER NULL,
+    tags JSON NULL,
+    updated_at DATETIME NULL,
+    deleted_at DATETIME NULL,
+    UNIQUE(system_id, file_id)
+);
+```
+
+Index skapas på `system_id` och `file_id` för snabba uppslagningar.
+
+## 🚧 Färdplan
+
+### Planerade funktioner
+
+- [ ] **Maldokument**: Utskrivbara formulär för manuell datainmatning
+- [ ] **Skannerintegration**: Skanna ifyllda formulär tillbaka till systemet
+- [ ] **LLM-baserad tolkning**: Extrahera handskriven information med hjälp av AI
+- [ ] **Export till källsystem**: Synkronisera tolkad data tillbaka till primära system
+- [ ] **Utskriftsköhantering**: Bättre kontroll över akuta utskrifter
+- [ ] **Webbgränssnitt**: Användarvänligt UI för dokumenthantering
+- [ ] **Autentisering och auktorisering**: Säker åtkomstkontroll
+- [ ] **Säkerhetskopiering och återställning**: Automatiserade säkerhetskopieringsstrategier
+- [ ] **Övervakning och aviseringar**: Hälsomonitorering av systemet
+
+### Framtida förbättringar
+
+- Stöd för ytterligare dokumentformat
+- Flerspråksstöd
+- Avancerad sökning och filtrering
+- Dokumentversionshantering
+- Integration med befintliga vårdledningssystem
+
+## 🏥 Användningsfall: Äldreomsorg
+
+På äldreomsorgsanläggningar måste kritisk information förbli tillgänglig vid nödsituationer:
+
+- **Nödprotokoll**: Steg-för-steg-procedurer för medicinska nödsituationer
+- **Patientinformation**: Essentiella journaler och vårdinstruktioner
+- **Kontaktlistor**: Nödkontakter och personalregister
+- **Medicineringsscheman**: Kritiska medicinadministrationsguider
+- **Anläggningskartor**: Evakueringsvägar och säkra zoner
+
+När infrastrukturen fallerar skriver BlackoutBox automatiskt ut dessa dokument, vilket säkerställer att personalen kan fortsätta vården utan avbrott.
+
+## 🤝 Bidrag
+
+Detta är ett hackathon-projekt, men bidrag är välkomna! Du är välkommen att:
+
+- Rapportera buggar
+- Föreslå nya funktioner
+- Skicka pull requests
+- Förbättra dokumentationen
+
+## 📝 Licens
+
+MPL2
+
+## 👥 Team
+
+Utvecklat under [Hackathon-namn] av:
+- [Teammedlemmars namn]
+
+## 🙏 Tack
+
+- Byggt för äldreomsorgsverksamheter för att säkerställa kontinuitet i vården
+- Inspirerat av behovet av resilient infrastruktur i kritiska offentliga tjänster
+
+---
+
+**Obs**: Detta är en proof-of-concept-implementation. Produktionssättning kräver ytterligare säkerhetshärdning, testning och infrastrukturplanering.
