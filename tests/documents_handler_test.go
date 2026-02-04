@@ -13,12 +13,14 @@ import (
 )
 
 type MockDocumentStore struct {
-	AddFunc     func(model models.Document) error
-	GetFunc     func() ([]models.Document, error)
-	UpdateFunc  func(model models.Document) error
-	GetByIdFunc func(id int) (*models.Document, error)
-	LastAdded   models.Document
-	AddCalled   bool
+	AddFunc           func(model models.Document) error
+	GetFunc           func() ([]models.Document, error)
+	UpdateFunc        func(model models.Document) error
+	GetByIdFunc       func(id string) (*models.Document, error)
+	GetByFileIdFunc   func(id string) (*models.Document, error)
+	GetBySystemIdFunc func(id string) ([]models.Document, error)
+	LastAdded         models.Document
+	AddCalled         bool
 }
 
 func (m *MockDocumentStore) Add(model models.Document) error {
@@ -44,11 +46,25 @@ func (m *MockDocumentStore) Update(model models.Document) error {
 	return nil
 }
 
-func (m *MockDocumentStore) GetById(id int) (*models.Document, error) {
+func (m *MockDocumentStore) GetById(id string) (*models.Document, error) {
 	if m.GetByIdFunc != nil {
 		return m.GetByIdFunc(id)
 	}
 	return nil, nil
+}
+
+func (m *MockDocumentStore) GetByFileId(id string) (*models.Document, error) {
+	if m.GetByFileIdFunc != nil {
+		return m.GetByFileIdFunc(id)
+	}
+	return nil, nil
+}
+
+func (m *MockDocumentStore) GetBySystemId(id string) ([]models.Document, error) {
+	if m.GetBySystemIdFunc != nil {
+		return m.GetBySystemIdFunc(id)
+	}
+	return []models.Document{}, nil
 }
 
 func TestDocumentHandlerPost(t *testing.T) {
