@@ -22,9 +22,9 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.Handle("GET /documents", documentHandler.Get())
+	mux.Handle("GET /documents/{id}", documentHandler.GetById())
 	mux.Handle("POST /documents", documentHandler.Post())
 	mux.Handle("PATCH /documents", documentHandler.Update())
-	mux.Handle("GET /documents/{id}", documentHandler.GetById())
 
 	if err := http.ListenAndServe(":3000", mux); err != nil {
 		log.Panicf("Unable to start server: %s", err.Error())
