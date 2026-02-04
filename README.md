@@ -16,6 +16,10 @@ This is an early-stage implementation developed during a hackathon to showcase t
 
 - **Offline-First Architecture**: Complete independence from internet connectivity
 - **Automatic Emergency Printing**: Trigger document printing based on scheduled timestamps
+- **Health Check Monitoring**: Monitor external system health via HTTP endpoints
+- **Automatic Trigger-Based Printing**: Print documents when systems fail for extended periods
+- **Print Job Tracking**: Monitor CUPS print jobs with status tracking
+- **Stuck Job Detection**: Alert on print jobs that have been pending too long
 - **Multi-System Support**: Organize documents by system (e.g., different care facilities, departments)
 - **Tag-Based Organization**: Categorize documents for quick retrieval
 - **Soft Delete**: Preserve document history with deletion tracking
@@ -48,10 +52,28 @@ The system is designed to be completely self-contained with minimal resource req
 | `POST` | `/documents` | Upload a new document |
 | `PATCH` | `/documents` | Update a document (placeholder) |
 
+### Triggers
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/triggers` | List all health check triggers |
+| `GET` | `/triggers/{id}` | Get a specific trigger by ID |
+| `POST` | `/triggers` | Create a new health check trigger |
+| `DELETE` | `/triggers/{id}` | Delete a trigger |
+
+### Print Jobs
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/print_jobs` | List all print jobs |
+| `GET` | `/print_jobs/{id}` | Get a specific print job by ID |
+| `GET` | `/print_jobs/stuck` | Get stuck print jobs (>5 min) |
+
 ### Query Parameters
 
 - `system-id` - Filter documents by system identifier
 - `file-id` - Filter documents by file identifier
+- `threshold` - For `/print_jobs/stuck`, time in seconds (default: 300)
 
 ### Request/Response Format
 
@@ -72,12 +94,42 @@ All endpoints use JSON for request and response bodies.
 }
 ```
 
+**Trigger Model:**
+```json
+{
+  "id": 1,
+  "system_id": "care-facility-1",
+  "url": "https://api.example.com/health",
+  "last_failed_at": null,
+  "buffer_seconds": 300,
+  "status": "ok",
+  "last_checked_at": 1738581234,
+  "retry_count": 0,
+  "created_at": "2026-02-04T10:00:00Z",
+  "updated_at": "2026-02-04T10:00:00Z"
+}
+```
+
+**Print Job Model:**
+```json
+{
+  "id": 1,
+  "document_id": 1,
+  "cups_job_id": "123",
+  "status": "printing",
+  "submitted_at": 1738581234,
+  "completed_at": null,
+  "error_message": null
+}
+```
+
 ## 🛠️ Getting Started
 
 ### Prerequisites
 
 - Go 1.25.6 or higher
 - SQLite3
+- CUPS (Common Unix Printing System) for printing functionality
 - (Optional) `migrate` CLI tool for database migrations
 
 ### Installation
@@ -142,7 +194,39 @@ curl -X POST http://localhost:3000/documents \
 - `tags` - JSON array of tags for categorization
 - `print_at` - Unix timestamp for automatic printing
 
+## 🎯 Health Check Triggers
+
+Create health check triggers to monitor external systems and automatically print documents when they fail:
+
+```bash
+curl -X POST http://localhost:3000/triggers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "system_id": "care-facility-1",
+    "url": "https://api.example.com/health",
+    "buffer_seconds": 300
+  }'
+```
+
+### How It Works
+
+1. **Health Checks**: The background worker checks trigger URLs every 30 seconds
+2. **Nagios-Style Logic**:
+   - OK (200-299): Reset retry count
+   - Error (400+ or timeout): Increment retry count
+   - After 3 consecutive failures + buffer time: Trigger print jobs
+3. **Automatic Printing**: All documents associated with the system_id are printed
+4. **Status Tracking**: Triggers have statuses: `ok`, `error`, `triggered`
+
+### Trigger Fields
+
+- `system_id` (required) - System/department identifier to monitor
+- `url` (required) - Health check endpoint URL
+- `buffer_seconds` (optional) - Time to wait before triggering (default: 300)
+
 ## 🗄️ Database Schema
+
+### Documents Table
 
 ```sql
 CREATE TABLE documents (
@@ -156,6 +240,38 @@ CREATE TABLE documents (
     updated_at DATETIME NULL,
     deleted_at DATETIME NULL,
     UNIQUE(system_id, file_id)
+);
+```
+
+### Triggers Table
+
+```sql
+CREATE TABLE triggers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    system_id TEXT NOT NULL,
+    url TEXT NOT NULL,
+    last_failed_at INTEGER,
+    buffer_seconds INTEGER NOT NULL DEFAULT 300,
+    status TEXT NOT NULL DEFAULT 'ok',
+    last_checked_at INTEGER,
+    retry_count INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Print Jobs Table
+
+```sql
+CREATE TABLE print_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL,
+    cups_job_id TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    submitted_at INTEGER NOT NULL,
+    completed_at INTEGER,
+    error_message TEXT,
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
 );
 ```
 
@@ -173,7 +289,7 @@ Indexes are created on `system_id` and `file_id` for fast lookups.
 - [ ] **Web Interface**: User-friendly UI for document management
 - [ ] **Authentication & Authorization**: Secure access control
 - [ ] **Backup & Recovery**: Automated backup strategies
-- [ ] **Monitoring & Alerts**: System health monitoring
+- [~] **Monitoring & Alerts**: System health monitoring (partially implemented - health checks with printing, webhooks planned)
 
 ### Future Enhancements
 
@@ -206,7 +322,7 @@ This is a hackathon project, but contributions are welcome! Feel free to:
 
 ## 📝 License
 
-[Specify your license here]
+MPL-2.0
 
 ## 👥 Team
 
