@@ -71,9 +71,9 @@ func main() {
 	mux.Handle("POST /documents", authMiddleware.Then(documentHandler.Post()))
 	mux.Handle("PATCH /documents", authMiddleware.Then(documentHandler.Update()))
 
-	mux.Handle("GET /", baseMiddleware.Then(templateHandler.Get()))
-	mux.Handle("POST /", baseMiddleware.Then(templateHandler.Post()))
-	mux.Handle("DELETE /", baseMiddleware.Then(templateHandler.Delete()))
+	mux.Handle("GET /templates", authMiddleware.Then(templateHandler.Get()))
+	mux.Handle("POST /templates", authMiddleware.Then(templateHandler.Post()))
+	mux.Handle("DELETE /templates", authMiddleware.Then(templateHandler.Delete()))
 
 	mux.Handle("GET /triggers", baseMiddleware.Then(triggerHandler.Get()))
 	mux.Handle("GET /triggers/{id}", baseMiddleware.Then(triggerHandler.GetById()))
