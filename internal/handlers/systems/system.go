@@ -31,31 +31,27 @@ type SystemHandler struct {
 //	}
 func (h *SystemHandler) Sync() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var payload struct {
-			SystemId  string            `json:"system_id"`
-			Documents []models.Document `json:"documents"`
-		}
-
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		systemId := r.PathValue("system_id")
+		if systemId == "" {
+			http.Error(w, "system_id is required", http.StatusBadRequest)
 			return
 		}
 
-		if payload.SystemId == "" {
-			http.Error(w, "system_id is required", http.StatusBadRequest)
+		var documents []models.Document
+		if err := json.NewDecoder(r.Body).Decode(&documents); err != nil {
+			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 			return
 		}
 
 		now := time.Now()
 
-		for i := range payload.Documents {
-			payload.Documents[i].SystemId = payload.SystemId
-			payload.Documents[i].UpdatedAt = &now
-			payload.Documents[i].DeletedAt = nil
+		for i := range documents {
+			documents[i].SystemId = systemId
+			documents[i].UpdatedAt = &now
+			documents[i].DeletedAt = nil
 		}
 
-		// Perform DB + filesystem sync
-		if err := h.SystemStore.Sync(payload.SystemId, payload.Documents); err != nil {
+		if err := h.SystemStore.Sync(systemId, documents); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -67,7 +63,7 @@ func (h *SystemHandler) Sync() http.HandlerFunc {
 // Delete removes all documents and files for a system.
 func (h *SystemHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		systemId := r.URL.Query().Get("system_id")
+		systemId := r.PathValue("system_id")
 		if systemId == "" {
 			http.Error(w, "system_id is required", http.StatusBadRequest)
 			return
@@ -77,10 +73,6 @@ func (h *SystemHandler) Delete() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		// Ensure filesystem cleanup (defensive)
-		systemDir := filepath.Join(h.UploadRoot, systemId)
-		_ = os.RemoveAll(systemDir)
 
 		w.WriteHeader(http.StatusNoContent)
 	}

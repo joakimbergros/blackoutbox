@@ -69,8 +69,8 @@ func main() {
 	mux.Handle("GET /print_jobs/stuck", printJobHandler.GetStuck())
 
 	// System routes (bulk / orchestration)
-	mux.Handle("POST /systems/sync", systemHandler.Sync())
-	mux.Handle("DELETE /systems", systemHandler.Delete())
+	mux.Handle("POST /systems/{system_id}/sync", systemHandler.Sync())
+	mux.Handle("DELETE /systems/{system_id}", systemHandler.Delete())
 
 	server := &http.Server{
 		Addr:    ":3000",
