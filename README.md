@@ -52,6 +52,21 @@ The system is designed to be completely self-contained with minimal resource req
 | `POST` | `/documents` | Upload a new document |
 | `PATCH` | `/documents` | Update a document (placeholder) |
 
+### Systems
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/systems/{id}/sync` | Mirror system storage state with request data |
+| `DELETE` | `/systems/{id}` | Remove all documents for a given system |
+
+### Templates
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/templates` | List all documents or filter by `system-id` or `file-id` |
+| `POST` | `/templates` | Upload a new document |
+| `DELETE` | `/templates` | Remove a document |
+
 ### Triggers
 
 | Method | Endpoint | Description |
@@ -243,6 +258,20 @@ CREATE TABLE documents (
 );
 ```
 
+### Templates table
+```sql
+CREATE TABLE templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    system_id TEXT NOT NULL,
+    file_id TEXT NOT NULL,
+    template_path TEXT NOT NULL,
+    description TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at DATETIME,
+    UNIQUE(system_id, file_id, template_path)
+)
+```
+
 ### Triggers Table
 
 ```sql
@@ -281,7 +310,7 @@ Indexes are created on `system_id` and `file_id` for fast lookups.
 
 ### Planned Features
 
-- [ ] **Template Documents**: Printable forms for manual data entry
+- [x] **Template Documents**: Printable forms for manual data entry
 - [ ] **Scanning Integration**: Scan filled forms back into the system
 - [ ] **LLM-Based Parsing**: Extract handwritten information using AI
 - [ ] **Export to Source Systems**: Sync parsed data back to primary systems

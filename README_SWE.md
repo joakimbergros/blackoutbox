@@ -52,6 +52,21 @@ Systemet är designat för att vara helt fristående med minimala resurskrav.
 | `POST` | `/documents` | Ladda upp ett nytt dokument |
 | `PATCH` | `/documents` | Uppdatera ett dokument (platshållare) |
 
+### System
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/systems/{id}/sync` | Spegla lagring på enhet med data från förfrågan |
+| `DELETE` | `/systems/{id}` | Ta bort alla dokument relaterat till systemet |
+
+### Templates
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/templates` | List all documents or filter by `system-id` or `file-id` |
+| `POST` | `/templates` | Upload a new document |
+| `DELETE` | `/templates` | Remove a document |
+
 ### Utlösare (Triggers)
 
 | Metod | Slutpunkt | Beskrivning |
@@ -243,6 +258,20 @@ CREATE TABLE documents (
 );
 ```
 
+### Malltabell
+```sql
+CREATE TABLE templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    system_id TEXT NOT NULL,
+    file_id TEXT NOT NULL,
+    template_path TEXT NOT NULL,
+    description TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at DATETIME,
+    UNIQUE(system_id, file_id, template_path)
+)
+```
+
 ### Utlösartabell (Triggers Table)
 
 ```sql
@@ -281,7 +310,7 @@ Index skapas på `system_id` och `file_id` för snabba uppslagningar.
 
 ### Planerade funktioner
 
-- [ ] **Maldokument**: Utskrivbara formulär för manuell datainmatning
+- [x] **Maldokument**: Utskrivbara formulär för manuell datainmatning
 - [ ] **Skannerintegration**: Skanna ifyllda formulär tillbaka till systemet
 - [ ] **LLM-baserad tolkning**: Extrahera handskriven information med hjälp av AI
 - [ ] **Export till källsystem**: Synkronisera tolkad data tillbaka till primära system
