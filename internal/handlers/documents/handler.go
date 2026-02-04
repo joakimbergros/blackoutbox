@@ -19,20 +19,45 @@ type DocumentHandler struct {
 
 func (h *DocumentHandler) Get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		documents, err := h.Store.Get()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+		systemIdFilter := r.URL.Query().Get("system-id")
+		fileIdFilter := r.URL.Query().Get("file-id")
+
+		var data []byte
+		var marshallErr error
+
+		if systemIdFilter != "" {
+			documents, err := h.Store.GetBySystemId(systemIdFilter)
+			if err != nil {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+
+			data, marshallErr = json.Marshal(documents)
+		} else if fileIdFilter != "" {
+			document, err := h.Store.GetByFileId(fileIdFilter)
+			if err != nil {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+
+			data, marshallErr = json.Marshal(document)
+		} else {
+			documents, err := h.Store.Get()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			data, marshallErr = json.Marshal(documents)
 		}
 
-		json, err := json.Marshal(documents)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if marshallErr != nil {
+			http.Error(w, marshallErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Add("Content-Type", "application/json")
-		w.Write(json)
+		w.Write(data)
 		return
 	}
 }
