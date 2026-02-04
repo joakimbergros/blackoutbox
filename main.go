@@ -10,6 +10,7 @@ import (
 	"blackoutbox/internal/handlers/printjobs"
 	"blackoutbox/internal/handlers/systems"
 	"blackoutbox/internal/handlers/triggers"
+	"blackoutbox/internal/middleware"
 	"blackoutbox/internal/monitor"
 	"blackoutbox/internal/stores"
 	"blackoutbox/internal/worker"
@@ -56,25 +57,28 @@ func main() {
 
 	go workerService.Start()
 
+	baseMiddleware := middleware.Chain{middleware.LogRequest}
+	authMiddleware := append(baseMiddleware, middleware.AuthMiddleware)
+
 	mux := http.NewServeMux()
 
-	mux.Handle("GET /documents", documentHandler.Get())
-	mux.Handle("GET /documents/{id}", documentHandler.GetById())
-	mux.Handle("POST /documents", documentHandler.Post())
-	mux.Handle("PATCH /documents", documentHandler.Update())
+	mux.Handle("GET /documents", baseMiddleware.Then(documentHandler.Get()))
+	mux.Handle("GET /documents/{id}", baseMiddleware.Then(documentHandler.GetById()))
+	mux.Handle("POST /documents", authMiddleware.Then(documentHandler.Post()))
+	mux.Handle("PATCH /documents", authMiddleware.Then(documentHandler.Update()))
 
-	mux.Handle("GET /triggers", triggerHandler.Get())
-	mux.Handle("GET /triggers/{id}", triggerHandler.GetById())
-	mux.Handle("POST /triggers", triggerHandler.Post())
-	mux.Handle("DELETE /triggers/{id}", triggerHandler.Delete())
+	mux.Handle("GET /triggers", baseMiddleware.Then(triggerHandler.Get()))
+	mux.Handle("GET /triggers/{id}", baseMiddleware.Then(triggerHandler.GetById()))
+	mux.Handle("POST /triggers", authMiddleware.Then(triggerHandler.Post()))
+	mux.Handle("DELETE /triggers/{id}", authMiddleware.Then(triggerHandler.Delete()))
 
-	mux.Handle("GET /print_jobs", printJobHandler.Get())
-	mux.Handle("GET /print_jobs/{id}", printJobHandler.GetById())
-	mux.Handle("GET /print_jobs/stuck", printJobHandler.GetStuck())
+	mux.Handle("GET /print_jobs", baseMiddleware.Then(printJobHandler.Get()))
+	mux.Handle("GET /print_jobs/{id}", baseMiddleware.Then(printJobHandler.GetById()))
+	mux.Handle("GET /print_jobs/stuck", baseMiddleware.Then(printJobHandler.GetStuck()))
 
 	// System routes (bulk / orchestration)
-	mux.Handle("POST /systems/{system_id}/sync", systemHandler.Sync())
-	mux.Handle("DELETE /systems/{system_id}", systemHandler.Delete())
+	mux.Handle("POST /systems/{system_id}/sync", authMiddleware.Then(systemHandler.Sync()))
+	mux.Handle("DELETE /systems/{system_id}", authMiddleware.Then(systemHandler.Delete()))
 
 	serverTimeout := 5 * time.Second
 	server := &http.Server{
