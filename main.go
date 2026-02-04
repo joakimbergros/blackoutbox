@@ -4,6 +4,7 @@ import (
 	"blackoutbox/internal/cups"
 	"blackoutbox/internal/handlers/documents"
 	"blackoutbox/internal/handlers/printjobs"
+	"blackoutbox/internal/handlers/systems"
 	"blackoutbox/internal/handlers/triggers"
 	"blackoutbox/internal/monitor"
 	"blackoutbox/internal/stores"
@@ -35,6 +36,16 @@ func main() {
 	printJobStore := stores.PrintJobStore{Db: db}
 	printJobHandler := printjobs.PrintJobHandler{Store: &printJobStore}
 
+	systemStore := stores.SystemStore{
+		Db:        db,
+		FilesRoot: "uploads",
+	}
+
+	systemHandler := systems.SystemHandler{
+		SystemStore: &systemStore,
+		UploadRoot:  "uploads",
+	}
+
 	printer := cups.NewPrinter(&printJobStore)
 	monitorService := monitor.NewMonitor(&triggerStore, &documentStore, &printJobStore, printer)
 	workerService := worker.NewWorker(monitorService, printer)
@@ -56,6 +67,10 @@ func main() {
 	mux.Handle("GET /print_jobs", printJobHandler.Get())
 	mux.Handle("GET /print_jobs/{id}", printJobHandler.GetById())
 	mux.Handle("GET /print_jobs/stuck", printJobHandler.GetStuck())
+
+	// System routes (bulk / orchestration)
+	mux.Handle("POST /systems/sync", systemHandler.Sync())
+	mux.Handle("DELETE /systems", systemHandler.Delete())
 
 	server := &http.Server{
 		Addr:    ":3000",
