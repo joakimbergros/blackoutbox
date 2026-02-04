@@ -7,6 +7,7 @@ package cups
 import (
 	"blackoutbox/internal/models"
 	"blackoutbox/internal/stores"
+	"blackoutbox/internal/validation"
 	"fmt"
 	"log"
 	"os/exec"
@@ -37,6 +38,10 @@ func (p *Printer) CreatePrintJob(documentId int, filePath string) error {
 }
 
 func (p *Printer) submitPrint(filePath string) (string, error) {
+	if err := validation.ValidatePrintableFile(filePath); err != nil {
+		return "", fmt.Errorf("refusing to print invalid file: %w", err)
+	}
+
 	cmd := exec.Command("lp", filePath)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
