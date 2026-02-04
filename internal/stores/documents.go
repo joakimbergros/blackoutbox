@@ -3,6 +3,7 @@ package stores
 import (
 	"blackoutbox/internal/models"
 	"database/sql"
+	"encoding/json"
 	"time"
 )
 
@@ -10,8 +11,7 @@ type DocumentStoreInterface interface {
 	Add(model models.Document) error
 	Get() ([]models.Document, error)
 	Update(model models.Document) error
-	GetByFileId(id int) (*models.Document, error)
-	GetBySystemId(id int) ([]models.Document, error)
+	GetById(id int) (*models.Document, error)
 }
 
 type DocumentStore struct {
@@ -19,10 +19,15 @@ type DocumentStore struct {
 }
 
 func (h *DocumentStore) Add(model models.Document) error {
-	_, err := h.Db.Exec(`
-		INSERT INTO documents (ext_id, is_system, file_path, updated_at)
-		VALUES (?, ?, ?, ?)
-	`, model.ExternalId, model.IsSystem, model.FilePath, time.Now())
+	tagsJSON, err := json.Marshal(model.Tags)
+	if err != nil {
+		return err
+	}
+
+	_, err = h.Db.Exec(`
+		INSERT INTO documents (system_id, file_id, file_path, print_at, last_printed_at, tags, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+	`, model.SystemId, model.FileId, model.FilePath, model.PrintAt, model.LastPrintedAt, string(tagsJSON), time.Now())
 	if err != nil {
 		return err
 	}
@@ -32,7 +37,8 @@ func (h *DocumentStore) Add(model models.Document) error {
 
 func (h *DocumentStore) Get() ([]models.Document, error) {
 	query, err := h.Db.Query(`
-		SELECT * FROM documents
+		SELECT id, system_id, file_id, file_path, print_at, last_printed_at, tags, updated_at, deleted_at
+		FROM documents
 	`)
 	if err != nil {
 		return nil, err
@@ -42,17 +48,27 @@ func (h *DocumentStore) Get() ([]models.Document, error) {
 
 	for query.Next() {
 		var document models.Document
+		var tagsJSON string
 
 		err := query.Scan(
 			&document.Id,
-			&document.ExternalId,
-			&document.IsSystem,
+			&document.SystemId,
+			&document.FileId,
 			&document.FilePath,
+			&document.PrintAt,
+			&document.LastPrintedAt,
+			&tagsJSON,
 			&document.UpdatedAt,
 			&document.DeletedAt,
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		if tagsJSON != "" {
+			if err := json.Unmarshal([]byte(tagsJSON), &document.Tags); err != nil {
+				return nil, err
+			}
 		}
 
 		documents = append(documents, document)
@@ -65,10 +81,6 @@ func (s *DocumentStore) Update(model models.Document) error {
 	return nil
 }
 
-func (s *DocumentStore) GetByFileId(id int) (*models.Document, error) {
-	return nil, nil
-}
-
-func (s *DocumentStore) GetBySystemId(id int) ([]models.Document, error) {
+func (s *DocumentStore) GetById(id int) (*models.Document, error) {
 	return nil, nil
 }
