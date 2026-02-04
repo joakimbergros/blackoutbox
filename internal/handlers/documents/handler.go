@@ -2,6 +2,7 @@ package documents
 
 import (
 	"blackoutbox/internal/models"
+	"blackoutbox/internal/response"
 	"blackoutbox/internal/stores"
 	"encoding/json"
 	"fmt"
@@ -56,9 +57,7 @@ func (h *DocumentHandler) Get() http.HandlerFunc {
 			return
 		}
 
-		w.Header().Add("Content-Type", "application/json")
-		w.Write(data)
-		return
+		response.JSON(w, http.StatusOK, data)
 	}
 }
 
@@ -176,14 +175,6 @@ func (h *DocumentHandler) GetById() http.HandlerFunc {
 			return
 		}
 
-		json, err := json.Marshal(document)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Add("Content-Type", "application/json")
-		w.Write(json)
-		return
+		response.JSON(w, http.StatusOK, document)
 	}
 }
