@@ -140,7 +140,7 @@ func (h *DocumentHandler) Post() http.HandlerFunc {
 			}
 		}
 
-		now := time.Now()
+		now := time.Now().Unix()
 
 		if err := h.Store.Add(models.Document{
 			SystemId:      systemId,

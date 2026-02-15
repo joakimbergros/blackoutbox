@@ -94,7 +94,8 @@ func (h *TriggerHandler) Post() http.HandlerFunc {
 			bufferSeconds = *req.BufferSeconds
 		}
 
-		now := time.Now()
+		now := time.Now().Unix()
+
 		trigger := models.Trigger{
 			SystemId:      req.SystemId,
 			Url:           req.Url,

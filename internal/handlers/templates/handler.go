@@ -117,14 +117,14 @@ func (h *TemplatesHandler) Post() http.HandlerFunc {
 			return
 		}
 
-		now := time.Now()
+		now := time.Now().Unix()
 
 		if err := h.Store.Add(models.Template{
 			SystemId:    systemId,
 			FileId:      fileId,
 			FilePath:    filePath,
 			Description: r.FormValue("description"),
-			CreatedAt:   &now,
+			CreatedAt:   now,
 			DeletedAt:   nil,
 		}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

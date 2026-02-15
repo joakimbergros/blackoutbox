@@ -44,7 +44,7 @@ func (h *SystemHandler) Sync() http.HandlerFunc {
 			return
 		}
 
-		now := time.Now()
+		now := time.Now().Unix()
 
 		for i := range documents {
 			documents[i].SystemId = systemId
