@@ -55,7 +55,7 @@ func (s *SystemStore) Sync(systemId string, documents []models.Document) error {
 	}
 	defer stmt.Close()
 
-	now := time.Now()
+	now := time.Now().Unix()
 
 	for _, doc := range documents {
 		_, err := stmt.Exec(
@@ -64,7 +64,7 @@ func (s *SystemStore) Sync(systemId string, documents []models.Document) error {
 			doc.FilePath,
 			doc.PrintAt,
 			doc.LastPrintedAt,
-			&now,
+			now,
 		)
 		if err != nil {
 			return err

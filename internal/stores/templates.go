@@ -7,6 +7,7 @@ package stores
 import (
 	"blackoutbox/internal/models"
 	"database/sql"
+	"time"
 )
 
 type TemplateStoreInterface interface {
@@ -23,10 +24,12 @@ type TemplateStore struct {
 }
 
 func (s *TemplateStore) Add(model models.Template) error {
+	now := time.Now().Unix()
+
 	_, err := s.Db.Exec(`
-		INSERT INTO templates (system_id, file_id, file_path, description)
-		VALUES (?, ?, ?, ?, ?)
-	`, model.SystemId, model.FileId, model.FilePath, model.Description)
+		INSERT INTO templates (system_id, file_id, file_path, description, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`, model.SystemId, model.FileId, model.FilePath, model.Description, now, now)
 	if err != nil {
 		return err
 	}

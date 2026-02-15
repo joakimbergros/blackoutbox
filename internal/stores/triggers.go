@@ -27,10 +27,12 @@ type TriggerStore struct {
 }
 
 func (s *TriggerStore) Add(model models.Trigger) error {
+	now := time.Now().Unix()
+
 	_, err := s.Db.Exec(`
 		INSERT INTO triggers (system_id, url, last_failed_at, buffer_seconds, status, last_checked_at, retry_count, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, model.SystemId, model.Url, model.LastFailedAt, model.BufferSeconds, model.Status, model.LastCheckedAt, model.RetryCount, time.Now(), time.Now())
+	`, model.SystemId, model.Url, model.LastFailedAt, model.BufferSeconds, model.Status, model.LastCheckedAt, model.RetryCount, now, now)
 	if err != nil {
 		return err
 	}
@@ -130,11 +132,13 @@ func (s *TriggerStore) GetBySystemId(id string) (*models.Trigger, error) {
 }
 
 func (s *TriggerStore) Update(model models.Trigger) error {
+	now := time.Now().Unix()
+
 	_, err := s.Db.Exec(`
 		UPDATE triggers
 		SET system_id = ?, url = ?, last_failed_at = ?, buffer_seconds = ?, status = ?, last_checked_at = ?, retry_count = ?, updated_at = ?
 		WHERE id = ?
-	`, model.SystemId, model.Url, model.LastFailedAt, model.BufferSeconds, model.Status, model.LastCheckedAt, model.RetryCount, time.Now(), model.Id)
+	`, model.SystemId, model.Url, model.LastFailedAt, model.BufferSeconds, model.Status, model.LastCheckedAt, model.RetryCount, now, model.Id)
 	if err != nil {
 		return err
 	}
@@ -142,11 +146,13 @@ func (s *TriggerStore) Update(model models.Trigger) error {
 }
 
 func (s *TriggerStore) UpdateStatus(id string, status string) error {
+	now := time.Now().Unix()
+
 	_, err := s.Db.Exec(`
 		UPDATE triggers
 		SET status = ?, updated_at = ?
 		WHERE id = ?
-	`, status, time.Now(), id)
+	`, status, now, id)
 	if err != nil {
 		return err
 	}
@@ -154,11 +160,13 @@ func (s *TriggerStore) UpdateStatus(id string, status string) error {
 }
 
 func (s *TriggerStore) IncrementRetryCount(id string) error {
+	now := time.Now().Unix()
+
 	_, err := s.Db.Exec(`
 		UPDATE triggers
 		SET retry_count = retry_count + 1, updated_at = ?
 		WHERE id = ?
-	`, time.Now(), id)
+	`, now, id)
 	if err != nil {
 		return err
 	}
@@ -166,11 +174,13 @@ func (s *TriggerStore) IncrementRetryCount(id string) error {
 }
 
 func (s *TriggerStore) ResetRetryCount(id string) error {
+	now := time.Now().Unix()
+
 	_, err := s.Db.Exec(`
 		UPDATE triggers
 		SET retry_count = 0, last_failed_at = NULL, status = 'ok', updated_at = ?
 		WHERE id = ?
-	`, time.Now(), id)
+	`, now, id)
 	if err != nil {
 		return err
 	}

@@ -30,10 +30,12 @@ func (s *DocumentStore) Add(model models.Document) error {
 		return err
 	}
 
+	updatedAt := time.Now().Unix()
+
 	_, err = s.Db.Exec(`
 		INSERT INTO documents (system_id, file_id, file_path, print_at, last_printed_at, tags, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
-	`, model.SystemId, model.FileId, model.FilePath, model.PrintAt, model.LastPrintedAt, string(tagsJSON), time.Now())
+	`, model.SystemId, model.FileId, model.FilePath, model.PrintAt, model.LastPrintedAt, string(tagsJSON), updatedAt)
 	if err != nil {
 		return err
 	}

@@ -4,14 +4,13 @@
 
 package models
 
-import "time"
-
 type Template struct {
-	Id          int        `json:"id"`
-	SystemId    string     `json:"system_id"`
-	FileId      string     `json:"file_id"`
-	FilePath    string     `json:"file_path"`
-	Description string     `json:"description"`
-	CreatedAt   *time.Time `json:"updated_at"`
-	DeletedAt   *time.Time `json:"deleted_at"`
+	Id          int    `json:"id"`
+	SystemId    string `json:"system_id"`
+	FileId      string `json:"file_id"`
+	FilePath    string `json:"file_path"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"created_at"`
+	UpdatedAt   int64  `json:"updated_at"`
+	DeletedAt   *int64 `json:"deleted_at"`
 }
