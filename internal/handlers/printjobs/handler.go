@@ -42,7 +42,12 @@ func (h *PrintJobHandler) GetById() http.HandlerFunc {
 			return
 		}
 
-		job, err := h.Store.GetById(id)
+		intId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			return
+		}
+
+		job, err := h.Store.GetById(intId)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return

@@ -4,11 +4,10 @@
 
 package models
 
-type Template struct {
+type System struct {
 	Id          int64  `json:"id"`
-	SystemId    int64  `json:"system_id"`
-	FileReference string `json:"file_id"`
-	FilePath    string `json:"file_path"`
+	Reference   string `json:"reference"`
+	Name        string `json:"name"`
 	Description string `json:"description"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`

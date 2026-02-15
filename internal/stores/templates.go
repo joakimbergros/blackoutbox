@@ -14,9 +14,9 @@ type TemplateStoreInterface interface {
 	Add(model models.Template) error
 	Get() ([]models.Template, error)
 	Update(model models.Template) error
-	GetById(id string) (*models.Template, error)
-	GetByFileId(id string) (*models.Template, error)
-	GetBySystemId(id string) ([]models.Template, error)
+	GetById(id int64) (*models.Template, error)
+	GetByFileReference(id string) (*models.Template, error)
+	GetBySystemId(id int64) ([]models.Template, error)
 }
 
 type TemplateStore struct {
@@ -29,7 +29,7 @@ func (s *TemplateStore) Add(model models.Template) error {
 	_, err := s.Db.Exec(`
 		INSERT INTO templates (system_id, file_id, file_path, description, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?)
-	`, model.SystemId, model.FileId, model.FilePath, model.Description, now, now)
+	`, model.SystemId, model.FileReference, model.FilePath, model.Description, now, now)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (s *TemplateStore) Get() ([]models.Template, error) {
 		err := query.Scan(
 			&document.Id,
 			&document.SystemId,
-			&document.FileId,
+			&document.FileReference,
 			&document.FilePath,
 			&document.CreatedAt,
 			&document.DeletedAt,
@@ -73,7 +73,7 @@ func (s *TemplateStore) Update(model models.Template) error {
 	return nil
 }
 
-func (s *TemplateStore) GetById(id string) (*models.Template, error) {
+func (s *TemplateStore) GetById(id int64) (*models.Template, error) {
 	row := s.Db.QueryRow(`
 		SELECT id, system_id, file_id, file_path, description, deleted_at
 		FROM templates
@@ -85,7 +85,7 @@ func (s *TemplateStore) GetById(id string) (*models.Template, error) {
 	err := row.Scan(
 		&document.Id,
 		&document.SystemId,
-		&document.FileId,
+		&document.FileReference,
 		&document.FilePath,
 		&document.Description,
 		&document.CreatedAt,
@@ -98,7 +98,7 @@ func (s *TemplateStore) GetById(id string) (*models.Template, error) {
 	return &document, nil
 }
 
-func (s *TemplateStore) GetByFileId(id string) (*models.Template, error) {
+func (s *TemplateStore) GetByFileReference(id string) (*models.Template, error) {
 	row := s.Db.QueryRow(`
 		SELECT id, system_id, file_id, file_path, description, created_at, deleted_at
 		FROM templates
@@ -110,7 +110,7 @@ func (s *TemplateStore) GetByFileId(id string) (*models.Template, error) {
 	err := row.Scan(
 		&document.Id,
 		&document.SystemId,
-		&document.FileId,
+		&document.FileReference,
 		&document.FilePath,
 		&document.Description,
 		&document.CreatedAt,
@@ -123,7 +123,7 @@ func (s *TemplateStore) GetByFileId(id string) (*models.Template, error) {
 	return &document, nil
 }
 
-func (s *TemplateStore) GetBySystemId(id string) ([]models.Template, error) {
+func (s *TemplateStore) GetBySystemId(id int64) ([]models.Template, error) {
 	query, err := s.Db.Query(`
 		SELECT id, system_id, file_id, file_path, description, created_at, deleted_at
 		FROM templates
@@ -132,6 +132,7 @@ func (s *TemplateStore) GetBySystemId(id string) ([]models.Template, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer query.Close()
 
 	var documents []models.Template
 
@@ -141,7 +142,7 @@ func (s *TemplateStore) GetBySystemId(id string) ([]models.Template, error) {
 		err := query.Scan(
 			&document.Id,
 			&document.SystemId,
-			&document.FileId,
+			&document.FileReference,
 			&document.FilePath,
 			&document.Description,
 			&document.CreatedAt,

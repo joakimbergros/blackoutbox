@@ -56,8 +56,56 @@ The system is designed to be completely self-contained with minimal resource req
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| `GET` | `/systems` | List all systems |
+| `GET` | `/systems/{id}` | Get a specific system by ID |
+| `POST` | `/systems` | Create a new system |
+| `PUT` | `/systems/{id}` | Update a system |
+| `DELETE` | `/systems/{id}` | Delete a system (soft delete) |
+
+### System CRUD Examples
+
+**Create a System:**
+```bash
+curl -X POST http://localhost:3000/systems \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "care-facility-1",
+    "name": "Elderly Care Facility Alpha",
+    "description": "Primary care facility in downtown"
+  }'
+```
+
+**Get All Systems:**
+```bash
+curl -X GET http://localhost:3000/systems
+```
+
+**Get Specific System:**
+```bash
+curl -X GET http://localhost:3000/systems/care-facility-1
+```
+
+**Update a System:**
+```bash
+curl -X PUT http://localhost:3000/systems/care-facility-1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "care-facility-1",
+    "name": "Elderly Care Facility Alpha - Updated",
+    "description": "Primary care facility with expanded capacity"
+  }'
+```
+
+**Delete a System:**
+```bash
+curl -X DELETE http://localhost:3000/systems/care-facility-1
+```
+
+### System Bulk Operations
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
 | `POST` | `/systems/{id}/sync` | Mirror system storage state with request data |
-| `DELETE` | `/systems/{id}` | Remove all documents for a given system |
 
 ### Templates
 
@@ -142,6 +190,18 @@ All timestamps are represented as Unix epoch integers (seconds since 1970-01-01 
   "submitted_at": 1738581234,
   "completed_at": null,
   "error_message": null
+}
+```
+
+**System Model:**
+```json
+{
+  "id": "care-facility-1",
+  "name": "Elderly Care Facility Alpha",
+  "description": "Primary care facility in downtown",
+  "created_at": 1738581234,
+  "updated_at": 1738581234,
+  "deleted_at": null
 }
 ```
 
@@ -248,20 +308,36 @@ curl -X POST http://localhost:3000/triggers \
 
 ## 🗄️ Database Schema
 
+### Systems Table
+
+```sql
+CREATE TABLE systems (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    deleted_at INTEGER NULL,
+    CHECK (id != ''),
+    CHECK (name != '')
+);
+```
+
 ### Documents Table
 
 ```sql
 CREATE TABLE documents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    system_id STRING NOT NULL,
-    file_id STRING NOT NULL,
+    system_id TEXT NOT NULL,
+    file_id TEXT NOT NULL,
     file_path TEXT NOT NULL,
     print_at INTEGER NULL,
     last_printed_at INTEGER NULL,
-    tags JSON NULL,
-    updated_at DATETIME NULL,
-    deleted_at DATETIME NULL,
-    UNIQUE(system_id, file_id)
+    tags TEXT NULL,
+    updated_at INTEGER NULL,
+    deleted_at INTEGER NULL,
+    UNIQUE(system_id, file_id),
+    FOREIGN KEY (system_id) REFERENCES systems(id) ON DELETE CASCADE
 );
 ```
 
@@ -273,9 +349,11 @@ CREATE TABLE templates (
     file_id TEXT NOT NULL,
     template_path TEXT NOT NULL,
     description TEXT,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted_at DATETIME,
-    UNIQUE(system_id, file_id, template_path)
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    deleted_at INTEGER NULL,
+    UNIQUE(system_id, file_id),
+    FOREIGN KEY (system_id) REFERENCES systems(id) ON DELETE CASCADE
 )
 ```
 
@@ -286,13 +364,14 @@ CREATE TABLE triggers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     system_id TEXT NOT NULL,
     url TEXT NOT NULL,
-    last_failed_at INTEGER,
+    last_failed_at INTEGER NULL,
     buffer_seconds INTEGER NOT NULL DEFAULT 300,
     status TEXT NOT NULL DEFAULT 'ok',
-    last_checked_at INTEGER,
+    last_checked_at INTEGER NULL,
     retry_count INTEGER NOT NULL DEFAULT 0,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    FOREIGN KEY (system_id) REFERENCES systems(id) ON DELETE CASCADE
 );
 ```
 

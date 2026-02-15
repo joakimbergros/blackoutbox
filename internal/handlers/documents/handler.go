@@ -29,10 +29,20 @@ func (h *DocumentHandler) Get() http.HandlerFunc {
 		systemIdFilter := r.URL.Query().Get("system-id")
 		fileIdFilter := r.URL.Query().Get("file-id")
 
+		systemIntId, err := strconv.ParseInt(systemIdFilter, 10, 64)
+		if err != nil {
+			return
+		}
+
+		fileIntId, err := strconv.ParseInt(fileIdFilter, 10, 64)
+		if err != nil {
+			return
+		}
+
 		var data any
 
 		if systemIdFilter != "" {
-			documents, err := h.Store.GetBySystemId(systemIdFilter)
+			documents, err := h.Store.GetBySystemId(systemIntId)
 			if err != nil {
 				w.WriteHeader(http.StatusNoContent)
 				return
@@ -40,7 +50,7 @@ func (h *DocumentHandler) Get() http.HandlerFunc {
 
 			data = documents
 		} else if fileIdFilter != "" {
-			document, err := h.Store.GetByFileId(fileIdFilter)
+			document, err := h.Store.GetByFileId(fileIntId)
 			if err != nil {
 				w.WriteHeader(http.StatusNotFound)
 				return
@@ -78,6 +88,11 @@ func (h *DocumentHandler) Post() http.HandlerFunc {
 
 		if strings.Contains(systemId, "../") || strings.Contains(systemId, "..\\") {
 			http.Error(w, "Invalid file path", http.StatusBadRequest)
+			return
+		}
+
+		systemIntId, err := strconv.ParseInt(systemId, 10, 64)
+		if err != nil {
 			return
 		}
 
@@ -143,8 +158,8 @@ func (h *DocumentHandler) Post() http.HandlerFunc {
 		now := time.Now().Unix()
 
 		if err := h.Store.Add(models.Document{
-			SystemId:      systemId,
-			FileId:        fileId,
+			SystemId:      systemIntId,
+			FileReference: fileId,
 			FilePath:      filepath.Join(storage.DocumentsRoot, systemId, filename),
 			PrintAt:       printAt,
 			LastPrintedAt: nil,
@@ -174,7 +189,12 @@ func (h *DocumentHandler) GetById() http.HandlerFunc {
 			return
 		}
 
-		document, err := h.Store.GetById(id)
+		intId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			return
+		}
+
+		document, err := h.Store.GetById(intId)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

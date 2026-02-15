@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -29,7 +28,7 @@ type Monitor struct {
 }
 
 type PrintJobCreator interface {
-	CreatePrintJob(documentId int, filePath string) error
+	CreatePrintJob(documentId int64, filePath string) error
 }
 
 func NewMonitor(
@@ -94,7 +93,7 @@ func (m *Monitor) CheckTrigger(trigger models.Trigger) error {
 func (m *Monitor) handleFailure(trigger models.Trigger, now int64, reason string) error {
 	log.Printf("Trigger %d failed: %s", trigger.Id, reason)
 
-	triggerId := strconv.Itoa(trigger.Id)
+	triggerId := trigger.Id
 
 	if trigger.LastFailedAt == nil {
 		nowCopy := now
@@ -124,7 +123,7 @@ func (m *Monitor) handleFailure(trigger models.Trigger, now int64, reason string
 func (m *Monitor) handleSuccess(trigger models.Trigger, now int64) error {
 	log.Printf("Trigger %d check successful", trigger.Id)
 
-	triggerId := strconv.Itoa(trigger.Id)
+	triggerId := trigger.Id
 
 	if trigger.RetryCount > 0 || trigger.Status != "ok" {
 		return m.triggerStore.ResetRetryCount(triggerId)
@@ -135,14 +134,14 @@ func (m *Monitor) handleSuccess(trigger models.Trigger, now int64) error {
 	return m.triggerStore.Update(trigger)
 }
 
-func (m *Monitor) triggerPrintJobs(systemId string) error {
+func (m *Monitor) triggerPrintJobs(systemId int64) error {
 	documents, err := m.documentStore.GetBySystemId(systemId)
 	if err != nil {
 		return fmt.Errorf("failed to get documents for system %s: %w", systemId, err)
 	}
 
 	for _, doc := range documents {
-		templates, err := m.templateStore.GetByFileId(doc.FileId)
+		templates, err := m.templateStore.GetByFileReference(doc.FileReference)
 		if err != nil {
 			log.Printf("Failed to gather templates from db for document %d: %v", doc.Id, err)
 		}

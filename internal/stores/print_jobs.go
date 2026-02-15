@@ -13,11 +13,11 @@ import (
 type PrintJobStoreInterface interface {
 	Add(job models.PrintJob) error
 	Get() ([]models.PrintJob, error)
-	GetById(id string) (*models.PrintJob, error)
-	GetByDocumentId(id string) ([]models.PrintJob, error)
+	GetById(id int64) (*models.PrintJob, error)
+	GetByDocumentId(id int64) ([]models.PrintJob, error)
 	GetStuckJobs(thresholdSeconds int) ([]models.PrintJob, error)
 	Update(job models.PrintJob) error
-	UpdateStatus(id string, status string) error
+	UpdateStatus(id int64, status string) error
 }
 
 type PrintJobStore struct {
@@ -68,7 +68,7 @@ func (s *PrintJobStore) Get() ([]models.PrintJob, error) {
 	return jobs, nil
 }
 
-func (s *PrintJobStore) GetById(id string) (*models.PrintJob, error) {
+func (s *PrintJobStore) GetById(id int64) (*models.PrintJob, error) {
 	row := s.Db.QueryRow(`
 		SELECT id, document_id, cups_job_id, status, submitted_at, completed_at, error_message
 		FROM print_jobs
@@ -93,7 +93,7 @@ func (s *PrintJobStore) GetById(id string) (*models.PrintJob, error) {
 	return &job, nil
 }
 
-func (s *PrintJobStore) GetByDocumentId(id string) ([]models.PrintJob, error) {
+func (s *PrintJobStore) GetByDocumentId(id int64) ([]models.PrintJob, error) {
 	query, err := s.Db.Query(`
 		SELECT id, document_id, cups_job_id, status, submitted_at, completed_at, error_message
 		FROM print_jobs
@@ -175,7 +175,7 @@ func (s *PrintJobStore) Update(job models.PrintJob) error {
 	return nil
 }
 
-func (s *PrintJobStore) UpdateStatus(id string, status string) error {
+func (s *PrintJobStore) UpdateStatus(id int64, status string) error {
 	_, err := s.Db.Exec(`
 		UPDATE print_jobs
 		SET status = ?

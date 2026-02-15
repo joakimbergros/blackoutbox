@@ -12,7 +12,6 @@ import (
 	"log"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -27,7 +26,7 @@ func NewPrinter(printJobStore stores.PrintJobStoreInterface) *Printer {
 	}
 }
 
-func (p *Printer) CreatePrintJob(documentId int, filePath string) error {
+func (p *Printer) CreatePrintJob(documentId int64, filePath string) error {
 	jobId, err := p.submitPrint(filePath)
 	if err != nil {
 		p.recordFailedJob(documentId, err.Error())
@@ -66,7 +65,7 @@ func (p *Printer) parseJobId(output string) string {
 	return matches[1]
 }
 
-func (p *Printer) recordSuccessfulJob(documentId int, cupsJobId string) error {
+func (p *Printer) recordSuccessfulJob(documentId int64, cupsJobId string) error {
 	now := time.Now().Unix()
 
 	job := models.PrintJob{
@@ -83,7 +82,7 @@ func (p *Printer) recordSuccessfulJob(documentId int, cupsJobId string) error {
 	return nil
 }
 
-func (p *Printer) recordFailedJob(documentId int, errorMessage string) error {
+func (p *Printer) recordFailedJob(documentId int64, errorMessage string) error {
 	now := time.Now().Unix()
 
 	job := models.PrintJob{
@@ -133,7 +132,7 @@ func (p *Printer) parseJobStatus(output, cupsJobId string) (string, error) {
 	return "completed", nil
 }
 
-func (p *Printer) UpdateJobStatus(jobId string) error {
+func (p *Printer) UpdateJobStatus(jobId int64) error {
 	job, err := p.printJobStore.GetById(jobId)
 	if err != nil {
 		return fmt.Errorf("failed to get print job: %w", err)
@@ -172,7 +171,7 @@ func (p *Printer) CheckStuckJobs(thresholdSeconds int) error {
 	for _, job := range stuckJobs {
 		log.Printf("Found stuck job %d (document %d), status: %s", job.Id, job.DocumentId, job.Status)
 		if job.CupsJobId != nil {
-			if err := p.UpdateJobStatus(strconv.Itoa(job.Id)); err != nil {
+			if err := p.UpdateJobStatus(job.Id); err != nil {
 				log.Printf("Failed to update job %d status: %v", job.Id, err)
 			}
 		}

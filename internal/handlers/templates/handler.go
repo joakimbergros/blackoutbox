@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -24,20 +25,25 @@ type TemplatesHandler struct {
 func (h *TemplatesHandler) Get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		systemIdFilter := r.URL.Query().Get("system-id")
-		fileIdFilter := r.URL.Query().Get("file-id")
+		fileReference := r.URL.Query().Get("file-id")
+
+		systemIntId, err := strconv.ParseInt(systemIdFilter, 10, 64)
+		if err != nil {
+			return
+		}
 
 		var data any
 
 		if systemIdFilter != "" {
-			documents, err := h.Store.GetBySystemId(systemIdFilter)
+			documents, err := h.Store.GetBySystemId(systemIntId)
 			if err != nil {
 				w.WriteHeader(http.StatusNoContent)
 				return
 			}
 
 			data = documents
-		} else if fileIdFilter != "" {
-			document, err := h.Store.GetByFileId(fileIdFilter)
+		} else if fileReference != "" {
+			document, err := h.Store.GetByFileReference(fileReference)
 			if err != nil {
 				w.WriteHeader(http.StatusNotFound)
 				return
@@ -70,6 +76,11 @@ func (h *TemplatesHandler) Post() http.HandlerFunc {
 		systemId := r.FormValue("system_id")
 		if systemId == "" {
 			http.Error(w, "system_id is required", http.StatusBadRequest)
+			return
+		}
+
+		systemIntId, err := strconv.ParseInt(systemId, 10, 64)
+		if err != nil {
 			return
 		}
 
@@ -120,12 +131,12 @@ func (h *TemplatesHandler) Post() http.HandlerFunc {
 		now := time.Now().Unix()
 
 		if err := h.Store.Add(models.Template{
-			SystemId:    systemId,
-			FileId:      fileId,
-			FilePath:    filePath,
-			Description: r.FormValue("description"),
-			CreatedAt:   now,
-			DeletedAt:   nil,
+			SystemId:      systemIntId,
+			FileReference: fileId,
+			FilePath:      filePath,
+			Description:   r.FormValue("description"),
+			CreatedAt:     now,
+			DeletedAt:     nil,
 		}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

@@ -5,9 +5,9 @@
 package models
 
 type Document struct {
-	Id            int      `json:"id"`
-	SystemId      string   `json:"system_id"`
-	FileId        string   `json:"file_id"`
+	Id            int64    `json:"id"`
+	SystemId      int64    `json:"system_id"`
+	FileReference string   `json:"file_id"`
 	FilePath      string   `json:"file_path"`
 	PrintAt       *int64   `json:"print_at"`
 	LastPrintedAt *int64   `json:"last_printed_at"`

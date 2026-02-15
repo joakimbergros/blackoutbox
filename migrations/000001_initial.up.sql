@@ -4,7 +4,7 @@
 
 CREATE TABLE documents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    system_id TEXT NOT NULL,
+    system_id INTEGER NOT NULL,
     file_id TEXT NOT NULL,
     file_path TEXT NOT NULL,
     print_at INTEGER NULL,
@@ -12,7 +12,8 @@ CREATE TABLE documents (
     tags TEXT NULL,
     updated_at INTEGER NULL,
     deleted_at INTEGER NULL,
-    UNIQUE(system_id, file_id)
+    UNIQUE(system_id, file_id),
+    FOREIGN KEY (system_id) REFERENCES systems(id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_documents_system_id ON documents(system_id);

@@ -15,9 +15,9 @@ type DocumentStoreInterface interface {
 	Add(model models.Document) error
 	Get() ([]models.Document, error)
 	Update(model models.Document) error
-	GetById(id string) (*models.Document, error)
-	GetByFileId(id string) (*models.Document, error)
-	GetBySystemId(id string) ([]models.Document, error)
+	GetById(id int64) (*models.Document, error)
+	GetByFileId(id int64) (*models.Document, error)
+	GetBySystemId(id int64) ([]models.Document, error)
 }
 
 type DocumentStore struct {
@@ -35,7 +35,7 @@ func (s *DocumentStore) Add(model models.Document) error {
 	_, err = s.Db.Exec(`
 		INSERT INTO documents (system_id, file_id, file_path, print_at, last_printed_at, tags, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
-	`, model.SystemId, model.FileId, model.FilePath, model.PrintAt, model.LastPrintedAt, string(tagsJSON), updatedAt)
+	`, model.SystemId, model.FileReference, model.FilePath, model.PrintAt, model.LastPrintedAt, string(tagsJSON), updatedAt)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (s *DocumentStore) Get() ([]models.Document, error) {
 		err := query.Scan(
 			&document.Id,
 			&document.SystemId,
-			&document.FileId,
+			&document.FileReference,
 			&document.FilePath,
 			&document.PrintAt,
 			&document.LastPrintedAt,
@@ -89,7 +89,7 @@ func (s *DocumentStore) Update(model models.Document) error {
 	return nil
 }
 
-func (s *DocumentStore) GetById(id string) (*models.Document, error) {
+func (s *DocumentStore) GetById(id int64) (*models.Document, error) {
 	row := s.Db.QueryRow(`
 		SELECT id, system_id, file_id, file_path, print_at, last_printed_at, tags, updated_at, deleted_at
 		FROM documents
@@ -102,7 +102,7 @@ func (s *DocumentStore) GetById(id string) (*models.Document, error) {
 	err := row.Scan(
 		&document.Id,
 		&document.SystemId,
-		&document.FileId,
+		&document.FileReference,
 		&document.FilePath,
 		&document.PrintAt,
 		&document.LastPrintedAt,
@@ -123,7 +123,7 @@ func (s *DocumentStore) GetById(id string) (*models.Document, error) {
 	return &document, nil
 }
 
-func (s *DocumentStore) GetByFileId(id string) (*models.Document, error) {
+func (s *DocumentStore) GetByFileId(id int64) (*models.Document, error) {
 	row := s.Db.QueryRow(`
 		SELECT id, system_id, file_id, file_path, print_at, last_printed_at, tags, updated_at, deleted_at
 		FROM documents
@@ -136,7 +136,7 @@ func (s *DocumentStore) GetByFileId(id string) (*models.Document, error) {
 	err := row.Scan(
 		&document.Id,
 		&document.SystemId,
-		&document.FileId,
+		&document.FileReference,
 		&document.FilePath,
 		&document.PrintAt,
 		&document.LastPrintedAt,
@@ -157,7 +157,7 @@ func (s *DocumentStore) GetByFileId(id string) (*models.Document, error) {
 	return &document, nil
 }
 
-func (s *DocumentStore) GetBySystemId(id string) ([]models.Document, error) {
+func (s *DocumentStore) GetBySystemId(id int64) ([]models.Document, error) {
 	query, err := s.Db.Query(`
 		SELECT id, system_id, file_id, file_path, print_at, last_printed_at, tags, updated_at, deleted_at
 		FROM documents
@@ -166,6 +166,7 @@ func (s *DocumentStore) GetBySystemId(id string) ([]models.Document, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer query.Close()
 
 	var documents []models.Document
 
@@ -176,7 +177,7 @@ func (s *DocumentStore) GetBySystemId(id string) ([]models.Document, error) {
 		err := query.Scan(
 			&document.Id,
 			&document.SystemId,
-			&document.FileId,
+			&document.FileReference,
 			&document.FilePath,
 			&document.PrintAt,
 			&document.LastPrintedAt,

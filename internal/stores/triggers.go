@@ -13,13 +13,13 @@ import (
 type TriggerStoreInterface interface {
 	Add(model models.Trigger) error
 	Get() ([]models.Trigger, error)
-	GetById(id string) (*models.Trigger, error)
-	GetBySystemId(id string) (*models.Trigger, error)
+	GetById(id int64) (*models.Trigger, error)
+	GetBySystemId(id int64) (*models.Trigger, error)
 	Update(model models.Trigger) error
-	UpdateStatus(id string, status string) error
-	IncrementRetryCount(id string) error
-	ResetRetryCount(id string) error
-	Delete(id string) error
+	UpdateStatus(id int64, status string) error
+	IncrementRetryCount(id int64) error
+	ResetRetryCount(id int64) error
+	Delete(id int64) error
 }
 
 type TriggerStore struct {
@@ -75,7 +75,7 @@ func (s *TriggerStore) Get() ([]models.Trigger, error) {
 	return triggers, nil
 }
 
-func (s *TriggerStore) GetById(id string) (*models.Trigger, error) {
+func (s *TriggerStore) GetById(id int64) (*models.Trigger, error) {
 	row := s.Db.QueryRow(`
 		SELECT id, system_id, url, last_failed_at, buffer_seconds, status, last_checked_at, retry_count, created_at, updated_at
 		FROM triggers
@@ -103,7 +103,7 @@ func (s *TriggerStore) GetById(id string) (*models.Trigger, error) {
 	return &trigger, nil
 }
 
-func (s *TriggerStore) GetBySystemId(id string) (*models.Trigger, error) {
+func (s *TriggerStore) GetBySystemId(id int64) (*models.Trigger, error) {
 	row := s.Db.QueryRow(`
 		SELECT id, system_id, url, last_failed_at, buffer_seconds, status, last_checked_at, retry_count, created_at, updated_at
 		FROM triggers
@@ -145,7 +145,7 @@ func (s *TriggerStore) Update(model models.Trigger) error {
 	return nil
 }
 
-func (s *TriggerStore) UpdateStatus(id string, status string) error {
+func (s *TriggerStore) UpdateStatus(id int64, status string) error {
 	now := time.Now().Unix()
 
 	_, err := s.Db.Exec(`
@@ -159,7 +159,7 @@ func (s *TriggerStore) UpdateStatus(id string, status string) error {
 	return nil
 }
 
-func (s *TriggerStore) IncrementRetryCount(id string) error {
+func (s *TriggerStore) IncrementRetryCount(id int64) error {
 	now := time.Now().Unix()
 
 	_, err := s.Db.Exec(`
@@ -173,7 +173,7 @@ func (s *TriggerStore) IncrementRetryCount(id string) error {
 	return nil
 }
 
-func (s *TriggerStore) ResetRetryCount(id string) error {
+func (s *TriggerStore) ResetRetryCount(id int64) error {
 	now := time.Now().Unix()
 
 	_, err := s.Db.Exec(`
@@ -187,7 +187,7 @@ func (s *TriggerStore) ResetRetryCount(id string) error {
 	return nil
 }
 
-func (s *TriggerStore) Delete(id string) error {
+func (s *TriggerStore) Delete(id int64) error {
 	_, err := s.Db.Exec("DELETE FROM triggers WHERE id = ?", id)
 	if err != nil {
 		return err

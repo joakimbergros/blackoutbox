@@ -49,9 +49,7 @@ func main() {
 		Db: db,
 	}
 
-	systemHandler := systems.SystemHandler{
-		SystemStore: &systemStore,
-	}
+	systemHandler := systems.SystemHandler{SystemStore: &systemStore}
 
 	printer := cups.NewPrinter(&printJobStore)
 	monitorService := monitor.NewMonitor(&triggerStore, &documentStore, &templateStore, &printJobStore, printer)
@@ -82,9 +80,13 @@ func main() {
 	mux.Handle("GET /print_jobs/{id}", baseMiddleware.Then(printJobHandler.GetById()))
 	mux.Handle("GET /print_jobs/stuck", baseMiddleware.Then(printJobHandler.GetStuck()))
 
-	// System routes (bulk / orchestration)
-	mux.Handle("POST /systems/{system_id}/sync", authMiddleware.Then(systemHandler.Sync()))
-	mux.Handle("DELETE /systems/{system_id}", authMiddleware.Then(systemHandler.Delete()))
+	// System CRUD routes
+	mux.Handle("GET /systems", baseMiddleware.Then(systemHandler.GetSystems()))
+	mux.Handle("GET /systems/{id}", baseMiddleware.Then(systemHandler.GetSystem()))
+	mux.Handle("POST /systems", authMiddleware.Then(systemHandler.CreateSystem()))
+	mux.Handle("PUT /systems/{id}", authMiddleware.Then(systemHandler.UpdateSystem()))
+	mux.Handle("DELETE /systems/{id}", authMiddleware.Then(systemHandler.DeleteSystem()))
+	mux.Handle("POST /systems/{id}/sync", authMiddleware.Then(systemHandler.Sync()))
 
 	serverTimeout := 5 * time.Second
 	server := &http.Server{

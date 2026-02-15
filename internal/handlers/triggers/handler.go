@@ -11,6 +11,7 @@ import (
 	"blackoutbox/internal/validation"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -44,7 +45,12 @@ func (h *TriggerHandler) GetById() http.HandlerFunc {
 			return
 		}
 
-		trigger, err := h.Store.GetById(id)
+		intId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			return
+		}
+
+		trigger, err := h.Store.GetById(intId)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -63,7 +69,7 @@ func (h *TriggerHandler) GetById() http.HandlerFunc {
 func (h *TriggerHandler) Post() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
-			SystemId      string `json:"system_id"`
+			SystemId      int64  `json:"system_id"`
 			Url           string `json:"url"`
 			BufferSeconds *int   `json:"buffer_seconds"`
 		}
@@ -73,7 +79,7 @@ func (h *TriggerHandler) Post() http.HandlerFunc {
 			return
 		}
 
-		if req.SystemId == "" {
+		if req.SystemId == 0 {
 			http.Error(w, "system_id is required", http.StatusBadRequest)
 			return
 		}
@@ -123,12 +129,17 @@ func (h *TriggerHandler) Delete() http.HandlerFunc {
 			return
 		}
 
-		if _, err := h.Store.GetById(id); err != nil {
+		intId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			return
+		}
+
+		if _, err := h.Store.GetById(intId); err != nil {
 			http.Error(w, "Trigger not found", http.StatusNotFound)
 			return
 		}
 
-		if err := h.Store.Delete(id); err != nil {
+		if err := h.Store.Delete(intId); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

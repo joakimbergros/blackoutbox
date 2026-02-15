@@ -5,7 +5,7 @@
 -- Create triggers table
 CREATE TABLE triggers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    system_id TEXT NOT NULL,
+    system_id INTEGER NOT NULL,
     url TEXT NOT NULL,
     last_failed_at INTEGER NULL,
     buffer_seconds INTEGER NOT NULL DEFAULT 300,
@@ -13,7 +13,8 @@ CREATE TABLE triggers (
     last_checked_at INTEGER NULL,
     retry_count INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
-    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    FOREIGN KEY (system_id) REFERENCES systems(id) ON DELETE CASCADE
 );
 
 -- Create index on system_id for faster lookups

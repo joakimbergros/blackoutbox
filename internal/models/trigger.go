@@ -5,8 +5,8 @@
 package models
 
 type Trigger struct {
-	Id            int    `json:"id"`
-	SystemId      string `json:"system_id"`
+	Id            int64  `json:"id"`
+	SystemId      int64  `json:"system_id"`
 	Url           string `json:"url"`
 	LastFailedAt  *int64 `json:"last_failed_at"`
 	BufferSeconds int    `json:"buffer_seconds"`
