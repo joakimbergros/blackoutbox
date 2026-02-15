@@ -94,6 +94,13 @@ The system is designed to be completely self-contained with minimal resource req
 
 All endpoints use JSON for request and response bodies.
 
+**Timestamp Format:**
+All timestamps are represented as Unix epoch integers (seconds since 1970-01-01 00:00:00 UTC).
+
+- Example: `1738581234` represents February 4, 2026 10:00:00 AM UTC
+- Null values indicate the timestamp is not set
+- Use `Date.now() / 1000` in JavaScript or `time.Now().Unix()` in Go to generate current timestamps
+
 **Document Model:**
 ```json
 {
@@ -104,7 +111,7 @@ All endpoints use JSON for request and response bodies.
   "print_at": 1738581234,
   "last_printed_at": null,
   "tags": ["emergency", "protocol", "high-priority"],
-  "updated_at": "2026-02-04T10:00:00Z",
+  "updated_at": 1738581234,
   "deleted_at": null
 }
 ```
@@ -120,8 +127,8 @@ All endpoints use JSON for request and response bodies.
   "status": "ok",
   "last_checked_at": 1738581234,
   "retry_count": 0,
-  "created_at": "2026-02-04T10:00:00Z",
-  "updated_at": "2026-02-04T10:00:00Z"
+  "created_at": 1738581234,
+  "updated_at": 1738581234
 }
 ```
 

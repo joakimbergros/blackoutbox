@@ -94,6 +94,13 @@ Systemet är designat för att vara helt fristående med minimala resurskrav.
 
 Alla slutpunkter använder JSON för begäran- och svarstexter.
 
+**Tidsstämpelsformat:**
+Alla tidsstämplar representeras som Unix-epokheltal (sekunder sedan 1970-01-01 00:00:00 UTC).
+
+- Exempel: `1738581234` representerar 4 februari 2026 10:00:00 UTC
+- Null-värden indikerar att tidsstämpeln inte är inställd
+- Använd `Date.now() / 1000` i JavaScript eller `time.Now().Unix()` i Go för att generera aktuella tidsstämplar
+
 **Dokumentmodell:**
 ```json
 {
@@ -104,7 +111,7 @@ Alla slutpunkter använder JSON för begäran- och svarstexter.
   "print_at": 1738581234,
   "last_printed_at": null,
   "tags": ["emergency", "protocol", "high-priority"],
-  "updated_at": "2026-02-04T10:00:00Z",
+  "updated_at": 1738581234,
   "deleted_at": null
 }
 ```
@@ -120,8 +127,8 @@ Alla slutpunkter använder JSON för begäran- och svarstexter.
   "status": "ok",
   "last_checked_at": 1738581234,
   "retry_count": 0,
-  "created_at": "2026-02-04T10:00:00Z",
-  "updated_at": "2026-02-04T10:00:00Z"
+  "created_at": 1738581234,
+  "updated_at": 1738581234
 }
 ```
 
